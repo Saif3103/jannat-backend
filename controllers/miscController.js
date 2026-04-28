@@ -95,6 +95,8 @@ const updateSettings = async (req, res) => {
       if (req.files.logo) settings.logo = req.files.logo[0].path;
       if (req.files.favicon) settings.favicon = req.files.favicon[0].path;
       if (req.files.profileImage) settings.profileImage = req.files.profileImage[0].path;
+      if (req.files.founderImage) settings.founderImage = req.files.founderImage[0].path;
+      if (req.files.coFounderImage) settings.coFounderImage = req.files.coFounderImage[0].path;
       if (req.files.video) settings.heroVideo = req.files.video[0].path;
       if (req.files.bannerImages) updates.bannerImages = req.files.bannerImages.map(f => f.path);
     }

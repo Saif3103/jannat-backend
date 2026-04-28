@@ -12,7 +12,7 @@ router.post('/offers', protect, adminOnly, upload.single('image'), createOffer);
 router.put('/offers/:id', protect, adminOnly, updateOffer);
 router.delete('/offers/:id', protect, adminOnly, deleteOffer);
 router.get('/settings', getSettings);
-router.put('/settings', protect, adminOnly, upload.fields([{ name: 'logo' }, { name: 'favicon' }, { name: 'profileImage' }, { name: 'video' }, { name: 'bannerImages', maxCount: 5 }]), updateSettings);
+router.put('/settings', protect, adminOnly, upload.fields([{ name: 'logo' }, { name: 'favicon' }, { name: 'profileImage' }, { name: 'founderImage' }, { name: 'coFounderImage' }, { name: 'video' }, { name: 'bannerImages', maxCount: 5 }]), updateSettings);
 router.post('/newsletter', subscribeNewsletter);
 router.get('/analytics', protect, adminOnly, getAnalytics);
 router.post('/chatbot', chatbotQuery);

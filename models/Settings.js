@@ -7,6 +7,8 @@ const settingsSchema = new mongoose.Schema({
   bannerImages: [String],
   heroVideo: { type: String, default: '' },
   profileImage: { type: String, default: '' },
+  founderImage: { type: String, default: '' },
+  coFounderImage: { type: String, default: '' },
   email: { type: String, default: 'jannatrugs786@gmail.com' },
   phone1: { type: String, default: '9235508422' },
   phone2: { type: String, default: '9696700737' },
