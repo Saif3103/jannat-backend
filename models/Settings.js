@@ -1,0 +1,39 @@
+const mongoose = require('mongoose');
+
+const settingsSchema = new mongoose.Schema({
+  siteName: { type: String, default: 'Jannat Rugs Co.' },
+  logo: { type: String, default: '' },
+  favicon: { type: String, default: '' },
+  bannerImages: [String],
+  heroVideo: { type: String, default: '' },
+  profileImage: { type: String, default: '' },
+  email: { type: String, default: 'jannatrugs786@gmail.com' },
+  phone1: { type: String, default: '9235508422' },
+  phone2: { type: String, default: '9696700737' },
+  address: { type: String, default: '' },
+  socialLinks: {
+    facebook: String,
+    instagram: String,
+    youtube: String,
+    whatsapp: String,
+    twitter: String,
+  },
+  seoTitle: String,
+  seoDescription: String,
+  chatbotFaqs: [{
+    question: String,
+    answer: String,
+  }],
+  testimonials: [{
+    name: String,
+    avatar: String,
+    rating: Number,
+    comment: String,
+    location: String,
+    isActive: { type: Boolean, default: true },
+  }],
+  newsletter: [String],
+  maintenance: { type: Boolean, default: false },
+}, { timestamps: true });
+
+module.exports = mongoose.model('Settings', settingsSchema);
