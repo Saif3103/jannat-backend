@@ -12,7 +12,7 @@ const getCategories = async (req, res) => {
 const createCategory = async (req, res) => {
   try {
     const { name, description } = req.body;
-    const image = req.file ? `/uploads/categories/${req.file.filename}` : '';
+    const image = req.file ? req.file.path : '';
     const category = await Category.create({ name, description, image });
     res.status(201).json({ success: true, category });
   } catch (err) {
@@ -25,7 +25,7 @@ const updateCategory = async (req, res) => {
     const category = await Category.findById(req.params.id);
     if (!category) return res.status(404).json({ success: false, message: 'Category not found' });
     Object.assign(category, req.body);
-    if (req.file) category.image = `/uploads/categories/${req.file.filename}`;
+    if (req.file) category.image = req.file.path;
     await category.save();
     res.json({ success: true, category });
   } catch (err) {

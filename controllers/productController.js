@@ -48,7 +48,7 @@ const getProduct = async (req, res) => {
 const createProduct = async (req, res) => {
   try {
     const { name, description, price, discountPrice, category, material, type, stock, tags, offerLabel, isFeatured, isBestSeller, isNewArrival, isTrending, isLuxury, colors, sizes } = req.body;
-    const images = req.files ? req.files.map(f => `/uploads/products/${f.filename}`) : [];
+    const images = req.files ? req.files.map(f => f.path) : [];
 
     const product = await Product.create({
       name, description, price, discountPrice, category, material, type, stock, offerLabel,
@@ -76,7 +76,7 @@ const updateProduct = async (req, res) => {
     if (typeof updates.tags === 'string') updates.tags = updates.tags.trim() ? updates.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
     if (typeof updates.colors === 'string') updates.colors = updates.colors.trim() ? updates.colors.split(',').map(s => s.trim()).filter(Boolean) : [];
     if (typeof updates.sizes === 'string') updates.sizes = updates.sizes.trim() ? updates.sizes.split(',').map(s => s.trim()).filter(Boolean).map(s => ({ label: s })) : [];
-    if (req.files && req.files.length > 0) updates.images = req.files.map(f => `/uploads/products/${f.filename}`);
+    if (req.files && req.files.length > 0) updates.images = req.files.map(f => f.path);
 
     Object.assign(product, updates);
     await product.save();

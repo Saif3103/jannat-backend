@@ -1,42 +1,16 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-
-const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    let folder = 'general';
-    if (file.fieldname === 'images') folder = 'products';
-    else if (file.fieldname === 'logo') folder = 'site';
-    else if (file.fieldname === 'favicon') folder = 'site';
-    else if (file.fieldname === 'profileImage') folder = 'site';
-    else if (file.fieldname === 'bannerImages') folder = 'site';
-    else if (file.fieldname === 'avatar') folder = 'avatars';
-    else if (file.fieldname === 'video') folder = 'videos';
-    else if (file.fieldname === 'categoryImage') folder = 'categories';
-    else if (file.fieldname === 'image') folder = 'general';
-
-    const dest = path.join(uploadDir, folder);
-    if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
-    cb(null, dest);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
+const { storage } = require('../config/cloudinary');
 
 const fileFilter = (req, file, cb) => {
-  const videoTypes = /mp4|webm|ogg|mov/;
   const imageTypes = /jpeg|jpg|png|gif|webp|svg/;
-  const ext = path.extname(file.originalname).toLowerCase().slice(1);
+  const videoTypes = /mp4|webm|ogg|mov/;
+  const ext = file.originalname.split('.').pop().toLowerCase();
 
   if (file.fieldname === 'video') {
     if (videoTypes.test(ext)) return cb(null, true);
     return cb(new Error('Only video files allowed'));
   }
+  
   if (imageTypes.test(ext)) return cb(null, true);
   cb(new Error('Only image files allowed'));
 };

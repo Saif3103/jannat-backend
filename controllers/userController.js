@@ -89,7 +89,7 @@ const updateProfile = async (req, res) => {
     const user = await User.findById(req.user._id);
     if (name) user.name = name;
     if (phone) user.phone = phone;
-    if (req.file) user.avatar = `/uploads/avatars/${req.file.filename}`;
+    if (req.file) user.avatar = req.file.path;
     await user.save();
     res.json({ success: true, user });
   } catch (err) {

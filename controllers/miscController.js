@@ -45,7 +45,7 @@ const getAllOffers = async (req, res) => {
 
 const createOffer = async (req, res) => {
   try {
-    const offer = await Offer.create({ ...req.body, image: req.file ? `/uploads/general/${req.file.filename}` : '' });
+    const offer = await Offer.create({ ...req.body, image: req.file ? req.file.path : '' });
     res.status(201).json({ success: true, offer });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -92,11 +92,11 @@ const updateSettings = async (req, res) => {
     if (updates.testimonials) updates.testimonials = typeof updates.testimonials === 'string' ? JSON.parse(updates.testimonials) : updates.testimonials;
     
     if (req.files) {
-      if (req.files.logo) settings.logo = `/uploads/site/${req.files.logo[0].filename}`;
-      if (req.files.favicon) settings.favicon = `/uploads/site/${req.files.favicon[0].filename}`;
-      if (req.files.profileImage) settings.profileImage = `/uploads/site/${req.files.profileImage[0].filename}`;
-      if (req.files.video) settings.heroVideo = `/uploads/videos/${req.files.video[0].filename}`;
-      if (req.files.bannerImages) updates.bannerImages = req.files.bannerImages.map(f => `/uploads/site/${f.filename}`);
+      if (req.files.logo) settings.logo = req.files.logo[0].path;
+      if (req.files.favicon) settings.favicon = req.files.favicon[0].path;
+      if (req.files.profileImage) settings.profileImage = req.files.profileImage[0].path;
+      if (req.files.video) settings.heroVideo = req.files.video[0].path;
+      if (req.files.bannerImages) updates.bannerImages = req.files.bannerImages.map(f => f.path);
     }
     
     Object.assign(settings, updates);
