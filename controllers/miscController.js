@@ -160,6 +160,8 @@ const getAnalytics = async (req, res) => {
 const chatbotQuery = async (req, res) => {
   try {
     const { message } = req.body;
+    if (!message) return res.json({ success: true, reply: 'Hello! How can I help you today?' });
+    
     console.log('Chatbot query received:', message);
     const settings = await Settings.findOne();
     const faqs = settings?.chatbotFaqs || [];
