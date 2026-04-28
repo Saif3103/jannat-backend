@@ -195,8 +195,8 @@ const chatbotQuery = async (req, res) => {
       reply = 'You can reach us at: 📞 9235508422 / 9696700737 or 📧 jannatrugs786@gmail.com';
     } else if (msg.includes('location') || msg.includes('address') || msg.includes('kahan') || msg.includes('pata') || msg.includes('jagah') || msg.includes('where')) {
       reply = 'Our firm is located in Ghantaghar, Mirzapur, Uttar Pradesh, famous for handmade carpets!';
-    } else if (msg.includes('owner') || msg.includes('founder') || msg.includes('malik') || msg.includes('kiski company') || msg.includes('shahid') || msg.includes('sazid')) {
-      reply = 'The owners and founders of Jannat Rugs Co. are Mr. Shahid Ali and Mr. Sazid Ali. They founded this beautiful handmade carpet brand.';
+    } else if (msg.includes('owner') || msg.includes('founder') || msg.includes('malik') || msg.includes('azeem') || msg.includes('sahana')) {
+      reply = 'The founder of Jannat Rugs Co. is Mr. Azeem Ansari, and the co-founder is Mrs. Sahana Ansari. They are visionary leaders committed to delivering authentic handmade luxury to your homes.';
     } else if (msg.includes('payment') || msg.includes('pay') || msg.includes('paisa')) {
       reply = 'We accept COD, UPI, Razorpay, and Cards. All payments are 100% secure!';
     } else if (msg.includes('kaise banta') || msg.includes('process') || msg.includes('taiyar') || msg.includes('banta hai') || msg.includes('make')) {
