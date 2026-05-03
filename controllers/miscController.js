@@ -179,46 +179,38 @@ const chatbotQuery = async (req, res) => {
 
     // Smart responses (Strictly English)
     let reply = '';
-    if (msg.includes('price') || msg.includes('cost') || msg.includes('rate') || msg.includes('kitna') || msg.includes('daam')) {
-      reply = 'Our carpets range from ₹1,500 to ₹2,50,000 depending on size and craftsmanship.';
-    } else if (msg.includes('size') || msg.includes('bada') || msg.includes('chota')) {
-      reply = 'We offer sizes like 2x3, 3x5, 4x6, 5x7, 6x9, 8x10, and 9x12 feet, plus custom sizes.';
-    } else if (msg.includes('material') || msg.includes('wool') || msg.includes('silk') || msg.includes('kapda')) {
-      reply = 'We use premium pure wool, silk, cotton, and jute. All carpets are handmade.';
+    if (msg.includes('price') || msg.includes('cost') || msg.includes('rate') || msg.includes('daam') || msg.includes('expensive')) {
+      reply = "Our masterpieces are an investment in art, ranging from ₹2,000 for boutique pieces to ₹2,50,000 for our most exclusive hand-knotted silk collections. Each price reflects the months of labor and premium materials used.";
+    } else if (msg.includes('size') || msg.includes('dimension') || msg.includes('feet') || msg.includes('bada') || msg.includes('chota')) {
+      reply = "We offer a wide range of standard sizes including 2x3, 4x6, 5x7, 6x9, 8x10, and 9x12 feet. We also specialize in bespoke sizes tailored perfectly to your architecture.";
+    } else if (msg.includes('material') || msg.includes('wool') || msg.includes('silk') || msg.includes('jute') || msg.includes('cotton')) {
+      reply = "We use only the finest natural fibers: high-altitude hand-spun wool for durability and pure mulberry silk for a celestial sheen. All our materials are ethically sourced and traditionally dyed.";
     } else if (msg.includes('order') || msg.includes('track') || msg.includes('status')) {
-      reply = 'You can track your order from the "Order Tracking" page or User Dashboard.';
-    } else if (msg.includes('delivery') || msg.includes('shipping') || msg.includes('kab tak') || msg.includes('time')) {
-      reply = 'Free shipping on orders above ₹5,000! Delivery takes 5-7 days.';
-    } else if (msg.includes('return') || msg.includes('refund') || msg.includes('wapas')) {
-      reply = 'We have an easy 7-day return policy. You can email or call us for returns.';
-    } else if (msg.includes('room') || msg.includes('living') || msg.includes('bedroom') || msg.includes('kamre')) {
-      reply = 'For living rooms, 5x7 or 8x10 ft is best. For bedrooms, 4x6 ft works great.';
-    } else if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey') || msg.includes('namaste')) {
-      reply = 'Welcome to Jannat Rugs Co.! 🙏 I am your AI assistant. How can I help you today?';
-    } else if (msg.includes('contact') || msg.includes('phone') || msg.includes('email') || msg.includes('number') || msg.includes('baat')) {
-      reply = 'You can reach us at: 📞 9235508422 / 9696700737 or 📧 jannatrugs786@gmail.com';
-    } else if (msg.includes('location') || msg.includes('address') || msg.includes('kahan') || msg.includes('pata') || msg.includes('jagah') || msg.includes('where')) {
-      reply = 'Our firm is located in Ghantaghar, Mirzapur, Uttar Pradesh, famous for handmade carpets!';
-    } else if (msg.includes('owner') || msg.includes('founder') || msg.includes('malik') || msg.includes('azeem') || msg.includes('sahana')) {
-      reply = 'The founder of Jannat Rugs Co. is Mr. Azeem Ansari, and the co-founder is Mrs. Sahana Ansari. They are visionary leaders committed to delivering authentic handmade luxury to your homes.';
-    } else if (msg.includes('payment') || msg.includes('pay') || msg.includes('paisa')) {
-      reply = 'We accept COD, UPI, Razorpay, and Cards. All payments are 100% secure!';
-    } else if (msg.includes('kaise banta') || msg.includes('process') || msg.includes('taiyar') || msg.includes('banta hai') || msg.includes('make')) {
-      reply = 'Our carpets are 100% handmade. The premium wool is dyed, and then artisans knot them by hand on traditional looms.';
-    } else if (msg.includes('handmade') || msg.includes('hand made') || msg.includes('haath')) {
-      reply = 'Yes! All our carpets are 100% authentic handmade, ensuring premium quality and uniqueness. 🎨';
-    } else if (msg.includes('dhona') || msg.includes('clean') || msg.includes('saaf') || msg.includes('wash')) {
-      reply = 'You can vacuum regularly, but for deep cleaning, please use professional dry-cleaning services only.';
-    } else if (msg.includes('life') || msg.includes('durability') || msg.includes('tikega') || msg.includes('saal') || msg.includes('umar')) {
-      reply = 'Since they are handmade from premium wool, our carpets can easily last 20-30+ years!';
-    } else if (msg.includes('custom') || msg.includes('apna design') || msg.includes('mera design')) {
-      reply = 'Yes, we make custom designs! Simply send us your design or specific size on WhatsApp.';
-    } else if (msg.includes('discount') || msg.includes('offer') || msg.includes('sale') || msg.includes('sasta') || msg.includes('chhut')) {
-      reply = 'We have great offers running! Check our website coupons. We also offer special discounts for bulk orders.';
-    } else if (msg.includes('dikhao') || msg.includes('show') || msg.includes('recommend') || msg.includes('suggest') || msg.includes('carpet') || msg.includes('rug')) {
-      reply = 'Sure! Here are some of our premium handmade carpets:';
+      reply = "You can monitor your masterpiece's journey through the 'Order Tracking' section in your dashboard. For real-time updates, our concierge team is always available.";
+    } else if (msg.includes('delivery') || msg.includes('shipping') || msg.includes('time') || msg.includes('arrive')) {
+      reply = "We provide complimentary white-glove shipping on orders above ₹5,000. Domestic deliveries typically arrive within 5-7 business days, meticulously packaged to ensure safety.";
+    } else if (msg.includes('return') || msg.includes('refund') || msg.includes('exchange')) {
+      reply = "Your satisfaction is paramount. We offer a 7-day return policy for our catalog pieces. If a rug doesn't perfectly resonate with your space, we will facilitate an effortless exchange.";
+    } else if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey') || msg.includes('greetings')) {
+      reply = "Greetings from Jannat Rugs Co.! ✨ I am your personal concierge. How may I assist you in discovering the perfect piece for your home today?";
+    } else if (msg.includes('contact') || msg.includes('phone') || msg.includes('email') || msg.includes('talk')) {
+      reply = "Our collection experts are available for a private consultation. You may call us at +91 9235508422 or email us at jannatrugs786@gmail.com.";
+    } else if (msg.includes('location') || msg.includes('address') || msg.includes('where') || msg.includes('pata')) {
+      reply = "Our heritage gallery is located in the historic carpet heartland of Bhadohi/Mirzapur, Uttar Pradesh. We welcome visits by appointment to experience our craftsmanship in person.";
+    } else if (msg.includes('owner') || msg.includes('founder') || msg.includes('who are')) {
+      reply = "Jannat Rugs Co. is led by visionaries Shahid Ali and Sazid Ali, who carry forward a multi-generational legacy of authentic hand-knotted carpet weaving.";
+    } else if (msg.includes('making') || msg.includes('process') || msg.includes('how are') || msg.includes('handmade')) {
+      reply = "Every Jannat rug is 100% hand-knotted by master artisans. The process involves hand-carding wool, traditional dyeing, and thousands of individual knots tied over several months on vertical looms.";
+    } else if (msg.includes('clean') || msg.includes('wash') || msg.includes('maintain') || msg.includes('care')) {
+      reply = "To preserve your rug's soul, vacuum regularly on a gentle setting. For deep rejuvenation, we recommend professional dry-cleaning every 2 years. Avoid harsh chemicals at all costs.";
+    } else if (msg.includes('custom') || msg.includes('bespoke') || msg.includes('my design') || msg.includes('apna design')) {
+      reply = "Absolutely. We specialize in bespoke commissions. You can specify the design, color palette, and dimensions to create a one-of-a-kind masterpiece for your residence.";
+    } else if (msg.includes('discount') || msg.includes('offer') || msg.includes('sale') || msg.includes('deal')) {
+      reply = "We believe in fair pricing for our artisans, but we do have exclusive seasonal collections. Currently, you can explore our 'Limited Time Offers' section on the homepage for special pieces.";
+    } else if (msg.includes('show') || msg.includes('recommend') || msg.includes('suggest') || msg.includes('carpet') || msg.includes('rug')) {
+      reply = "I would be delighted to recommend some of our most acclaimed pieces. Here are a few selections that represent the pinnacle of our current collection:";
     } else {
-      reply = 'Thank you! For specific details, please call us directly at 9235508422.';
+      reply = "That is an excellent inquiry. To provide you with the most accurate details, I can connect you with one of our senior carpet consultants. Would you like our contact information?";
     }
 
     // Suggest products if relevant
