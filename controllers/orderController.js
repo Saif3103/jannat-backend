@@ -25,7 +25,9 @@ const createOrder = async (req, res) => {
 // @desc  Get my orders
 const getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id }).sort('-createdAt');
+    const orders = await Order.find({ user: req.user._id })
+      .populate('orderItems.product', 'name images price')
+      .sort('-createdAt');
     res.json({ success: true, orders });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
