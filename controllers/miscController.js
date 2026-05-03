@@ -159,6 +159,23 @@ const getAnalytics = async (req, res) => {
 };
 
 // Chatbot
+// Get recent video reviews for homepage
+const getRecentVideoReviews = async (req, res) => {
+  try {
+    const products = await Product.find({ 'reviews.video': { $ne: '' } }).select('name reviews');
+    let videoReviews = [];
+    products.forEach(p => {
+      p.reviews.forEach(r => {
+        if (r.video) videoReviews.push({ ...r._doc, productName: p.name, productId: p._id });
+      });
+    });
+    videoReviews.sort((a, b) => b.createdAt - a.createdAt);
+    res.json({ success: true, reviews: videoReviews.slice(0, 10) });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 const chatbotQuery = async (req, res) => {
   try {
     const { message } = req.body;
@@ -226,4 +243,4 @@ const chatbotQuery = async (req, res) => {
   }
 };
 
-module.exports = { submitContact, getContacts, getOffers, getAllOffers, createOffer, updateOffer, deleteOffer, getSettings, updateSettings, subscribeNewsletter, getAnalytics, chatbotQuery };
+module.exports = { submitContact, getContacts, getOffers, getAllOffers, createOffer, updateOffer, deleteOffer, getSettings, updateSettings, subscribeNewsletter, getAnalytics, chatbotQuery, getRecentVideoReviews };

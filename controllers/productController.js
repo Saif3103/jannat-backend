@@ -97,20 +97,48 @@ const deleteProduct = async (req, res) => {
 };
 
 // @desc  Add review
+const Order = require('../models/Order');
+
 const addReview = async (req, res) => {
   try {
     const { rating, comment } = req.body;
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
 
+    // Verify delivery
+    const deliveredOrder = await Order.findOne({
+      user: req.user._id,
+      'orderItems.product': req.params.id,
+      orderStatus: 'Delivered'
+    });
+
+    if (!deliveredOrder) {
+      return res.status(403).json({ success: false, message: 'You can only review products that have been delivered to you' });
+    }
+
     const alreadyReviewed = product.reviews.find(r => r.user.toString() === req.user._id.toString());
     if (alreadyReviewed) return res.status(400).json({ success: false, message: 'You have already reviewed this product' });
 
-    product.reviews.push({ user: req.user._id, name: req.user.name, avatar: req.user.avatar, rating: Number(rating), comment });
+    const review = {
+      user: req.user._id,
+      name: req.user.name,
+      avatar: req.user.avatar,
+      rating: Number(rating),
+      comment,
+      video: '',
+      images: []
+    };
+
+    if (req.files) {
+      if (req.files.video) review.video = req.files.video[0].path;
+      if (req.files.images) review.images = req.files.images.map(f => f.path);
+    }
+
+    product.reviews.push(review);
     product.numReviews = product.reviews.length;
     product.rating = product.reviews.reduce((a, r) => a + r.rating, 0) / product.reviews.length;
     await product.save();
-    res.status(201).json({ success: true, message: 'Review added' });
+    res.status(201).json({ success: true, message: 'Thank you for your valuable feedback!' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

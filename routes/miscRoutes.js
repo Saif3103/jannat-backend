@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { submitContact, getContacts, getOffers, getAllOffers, createOffer, updateOffer, deleteOffer, getSettings, updateSettings, subscribeNewsletter, getAnalytics, chatbotQuery } = require('../controllers/miscController');
+const { submitContact, getContacts, getOffers, getAllOffers, createOffer, updateOffer, deleteOffer, getSettings, updateSettings, subscribeNewsletter, getAnalytics, chatbotQuery, getRecentVideoReviews } = require('../controllers/miscController');
 const { protect, adminOnly } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
@@ -25,6 +25,7 @@ router.put('/settings', protect, adminOnly, upload.fields([
 ]), updateSettings);
 router.post('/newsletter', subscribeNewsletter);
 router.get('/analytics', protect, adminOnly, getAnalytics);
+router.get('/video-reviews', getRecentVideoReviews);
 router.post('/chatbot', chatbotQuery);
 
 module.exports = router;

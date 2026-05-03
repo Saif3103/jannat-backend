@@ -10,6 +10,6 @@ router.get('/:id', getProduct);
 router.post('/', protect, adminOnly, upload.array('images', 50), createProduct);
 router.put('/:id', protect, adminOnly, upload.array('images', 50), updateProduct);
 router.delete('/:id', protect, adminOnly, deleteProduct);
-router.post('/:id/review', protect, addReview);
+router.post('/:id/review', protect, upload.fields([{ name: 'video', maxCount: 1 }, { name: 'images', maxCount: 5 }]), addReview);
 
 module.exports = router;

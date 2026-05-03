@@ -6,6 +6,8 @@ const reviewSchema = new mongoose.Schema({
   avatar: String,
   rating: { type: Number, required: true, min: 1, max: 5 },
   comment: { type: String, required: true },
+  video: { type: String, default: '' },
+  images: [{ type: String }],
   createdAt: { type: Date, default: Date.now }
 });
 
