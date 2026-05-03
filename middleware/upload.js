@@ -2,17 +2,17 @@ const multer = require('multer');
 const { storage } = require('../config/cloudinary');
 
 const fileFilter = (req, file, cb) => {
-  const imageTypes = /jpeg|jpg|png|gif|webp|svg/;
-  const videoTypes = /mp4|webm|ogg|mov/;
-  const ext = file.originalname.split('.').pop().toLowerCase();
+  const isVideoField = ['video', 'heroVideo', 'adVideo'].includes(file.fieldname);
+  const isVideoMime = file.mimetype.startsWith('video/');
+  const isImageMime = file.mimetype.startsWith('image/');
 
-  if (['video', 'heroVideo', 'adVideo'].includes(file.fieldname)) {
-    if (videoTypes.test(ext)) return cb(null, true);
-    return cb(new Error('Only video files allowed'));
+  if (isVideoField) {
+    if (isVideoMime) return cb(null, true);
+    return cb(new Error('Only video files allowed in this field'));
   }
   
-  if (imageTypes.test(ext)) return cb(null, true);
-  cb(new Error('Only image files allowed'));
+  if (isImageMime) return cb(null, true);
+  cb(new Error('Only image files allowed (JPEG, PNG, etc.)'));
 };
 
 const multerInstance = multer({
