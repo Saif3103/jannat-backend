@@ -6,7 +6,7 @@ const fileFilter = (req, file, cb) => {
   const videoTypes = /mp4|webm|ogg|mov/;
   const ext = file.originalname.split('.').pop().toLowerCase();
 
-  if (file.fieldname === 'video') {
+  if (['video', 'heroVideo', 'adVideo'].includes(file.fieldname)) {
     if (videoTypes.test(ext)) return cb(null, true);
     return cb(new Error('Only video files allowed'));
   }
