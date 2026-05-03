@@ -6,6 +6,7 @@ const settingsSchema = new mongoose.Schema({
   favicon: { type: String, default: '' },
   bannerImages: [String],
   heroVideo: { type: String, default: '' },
+  adVideo: { type: String, default: '' },
   profileImage: { type: String, default: '' },
   founderImage: { type: String, default: '' },
   coFounderImage: { type: String, default: '' },
