@@ -34,6 +34,10 @@ const productSchema = new mongoose.Schema({
   reviews: [reviewSchema],
   rating: { type: Number, default: 0 },
   numReviews: { type: Number, default: 0 },
+  processingTime: { type: String, default: '1-2 weeks' },
+  originPostcode: { type: String, default: '281001' },
+  returnPolicy: { type: String, default: '7 days' },
+  manufacturerInfo: { type: String, default: '' },
 }, { timestamps: true });
 
 productSchema.pre('save', function () {

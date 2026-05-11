@@ -57,7 +57,11 @@ const createProduct = async (req, res) => {
       tags: typeof tags === 'string' && tags.trim() ? tags.split(',').map(s => s.trim()).filter(Boolean) : (Array.isArray(tags) ? tags : []),
       colors: typeof colors === 'string' && colors.trim() ? colors.split(',').map(s => s.trim()).filter(Boolean) : (Array.isArray(colors) ? colors : []),
       sizes: typeof sizes === 'string' && sizes.trim() ? sizes.split(',').map(s => s.trim()).filter(Boolean).map(s => ({ label: s })) : (Array.isArray(sizes) ? sizes : []),
-      images
+      images,
+      processingTime: req.body.processingTime || '1-2 weeks',
+      originPostcode: req.body.originPostcode || '281001',
+      returnPolicy: req.body.returnPolicy || '7 days',
+      manufacturerInfo: req.body.manufacturerInfo || ''
     });
 
     res.status(201).json({ success: true, product });
