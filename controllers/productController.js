@@ -64,7 +64,12 @@ const createProduct = async (req, res) => {
     }
 
     const product = await Product.create({
-      name, description, price, discountPrice, category, material, type, stock, offerLabel,
+      name, description, 
+      price: Number(price) || 0, 
+      discountPrice: Number(discountPrice) || 0, 
+      category, material, type, 
+      stock: Number(stock) || 0, 
+      offerLabel,
       isFeatured: isFeatured === 'true', isBestSeller: isBestSeller === 'true',
       isNewArrival: isNewArrival !== 'false', isTrending: isTrending === 'true', isLuxury: isLuxury === 'true',
       tags: typeof tags === 'string' && tags.trim() ? tags.split(',').map(s => s.trim()).filter(Boolean) : (Array.isArray(tags) ? tags : []),
