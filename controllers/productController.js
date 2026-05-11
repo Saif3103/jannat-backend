@@ -50,13 +50,26 @@ const createProduct = async (req, res) => {
     const { name, description, price, discountPrice, category, material, type, stock, tags, offerLabel, isFeatured, isBestSeller, isNewArrival, isTrending, isLuxury, colors, sizes } = req.body;
     const images = req.files ? req.files.map(f => f.path) : [];
 
+    let sizesArr = [];
+    if (typeof sizes === 'string') {
+      try {
+        const parsed = JSON.parse(sizes);
+        if (Array.isArray(parsed)) sizesArr = parsed;
+        else throw new Error();
+      } catch {
+        sizesArr = sizes.trim() ? sizes.split(',').map(s => s.trim()).filter(Boolean).map(s => ({ label: s })) : [];
+      }
+    } else if (Array.isArray(sizes)) {
+      sizesArr = sizes;
+    }
+
     const product = await Product.create({
       name, description, price, discountPrice, category, material, type, stock, offerLabel,
       isFeatured: isFeatured === 'true', isBestSeller: isBestSeller === 'true',
       isNewArrival: isNewArrival !== 'false', isTrending: isTrending === 'true', isLuxury: isLuxury === 'true',
       tags: typeof tags === 'string' && tags.trim() ? tags.split(',').map(s => s.trim()).filter(Boolean) : (Array.isArray(tags) ? tags : []),
       colors: typeof colors === 'string' && colors.trim() ? colors.split(',').map(s => s.trim()).filter(Boolean) : (Array.isArray(colors) ? colors : []),
-      sizes: typeof sizes === 'string' && sizes.trim() ? sizes.split(',').map(s => s.trim()).filter(Boolean).map(s => ({ label: s })) : (Array.isArray(sizes) ? sizes : []),
+      sizes: sizesArr,
       images,
       processingTime: req.body.processingTime || '1-2 weeks',
       originPostcode: req.body.originPostcode || '281001',
@@ -79,7 +92,15 @@ const updateProduct = async (req, res) => {
     const updates = req.body;
     if (typeof updates.tags === 'string') updates.tags = updates.tags.trim() ? updates.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
     if (typeof updates.colors === 'string') updates.colors = updates.colors.trim() ? updates.colors.split(',').map(s => s.trim()).filter(Boolean) : [];
-    if (typeof updates.sizes === 'string') updates.sizes = updates.sizes.trim() ? updates.sizes.split(',').map(s => s.trim()).filter(Boolean).map(s => ({ label: s })) : [];
+    if (typeof updates.sizes === 'string') {
+      try {
+        const parsed = JSON.parse(updates.sizes);
+        if (Array.isArray(parsed)) updates.sizes = parsed;
+        else throw new Error();
+      } catch {
+        updates.sizes = updates.sizes.trim() ? updates.sizes.split(',').map(s => s.trim()).filter(Boolean).map(s => ({ label: s })) : [];
+      }
+    }
     if (req.files && req.files.length > 0) updates.images = req.files.map(f => f.path);
 
     Object.assign(product, updates);
