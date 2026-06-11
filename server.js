@@ -15,11 +15,36 @@ connectDB();
 // ✅ Security
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
-// ✅ CORS (safe for production)
-const allowedOrigin = process.env.FRONTEND_URL || '*';
+// ✅ CORS (safe for production and development)
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://localhost:5000'
+];
+
+if (process.env.FRONTEND_URL) {
+  process.env.FRONTEND_URL.split(',').forEach(url => {
+    allowedOrigins.push(url.trim());
+  });
+}
 
 app.use(cors({
-  origin: allowedOrigin,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, postman, curl)
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (allowedOrigin === '*') return true;
+      return origin.replace(/\/$/, '') === allowedOrigin.replace(/\/$/, '');
+    });
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Not allowed by CORS: ${origin}`));
+    }
+  },
   credentials: true
 }));
 
