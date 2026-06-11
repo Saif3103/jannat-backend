@@ -68,7 +68,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ✅ Root route (NEW)
 app.get('/', (req, res) => {
-  res.send('🚀 Jannat Rugs Backend API is running');
+  res.json({
+    message: '🚀 Jannat Rugs Backend API is running',
+    version: '1.0.2',
+    allowedOrigins
+  });
 });
 
 // ✅ Health check
