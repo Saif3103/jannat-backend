@@ -18,6 +18,8 @@ router.put('/settings', protect, adminOnly, upload.fields([
   { name: 'profileImage' }, 
   { name: 'founderImage' }, 
   { name: 'coFounderImage' }, 
+  { name: 'sahanaImage' }, 
+  { name: 'saifImage' }, 
   { name: 'video' }, 
   { name: 'heroVideo' }, 
   { name: 'adVideo' }, 
