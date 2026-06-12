@@ -45,6 +45,7 @@ const upload = {
   single: (fieldName) => wrapMulter(multerInstance.single(fieldName)),
   fields: (fields) => wrapMulter(multerInstance.fields(fields)),
   none: () => wrapMulter(multerInstance.none()),
+  any: () => wrapMulter(multerInstance.any()),
 };
 
 module.exports = upload;
