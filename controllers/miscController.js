@@ -85,6 +85,16 @@ const updateSettings = async (req, res) => {
   try {
     let settings = await Settings.findOne();
     if (!settings) settings = new Settings();
+
+    // Convert upload.any() array to an object matching upload.fields structure
+    if (req.files && Array.isArray(req.files)) {
+      const filesObj = {};
+      req.files.forEach(f => {
+        if (!filesObj[f.fieldname]) filesObj[f.fieldname] = [];
+        filesObj[f.fieldname].push(f);
+      });
+      req.files = filesObj;
+    }
     
     const updates = req.body;
     if (updates.socialLinks) updates.socialLinks = typeof updates.socialLinks === 'string' ? JSON.parse(updates.socialLinks) : updates.socialLinks;
@@ -105,6 +115,10 @@ const updateSettings = async (req, res) => {
       if (req.files.bannerImages) updates.bannerImages = req.files.bannerImages.map(f => f.path);
     }
     
+    // Ensure we don't accidentally overwrite images with empty strings from req.body
+    const fileFields = ['logo', 'favicon', 'profileImage', 'founderImage', 'coFounderImage', 'sahanaImage', 'saifImage', 'video', 'heroVideo', 'adVideo'];
+    fileFields.forEach(f => delete updates[f]);
+
     Object.assign(settings, updates);
     await settings.save();
     res.json({ success: true, settings });
