@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const Invoice = require('../models/Invoice');
 const { v4: uuidv4 } = require('uuid');
 
 // @desc  Create order
@@ -14,6 +15,18 @@ const createOrder = async (req, res) => {
       orderItems, shippingAddress, paymentMethod, itemsPrice, shippingPrice, taxPrice, totalPrice, notes,
       trackingNumber: 'JRC-' + uuidv4().split('-')[0].toUpperCase(),
       statusHistory: [{ status: 'Pending', message: 'Order placed successfully' }]
+    });
+
+    // Auto-generate invoice record
+    const dateYear = new Date().getFullYear();
+    const randomId = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const invoiceNumber = `INV-${dateYear}-${randomId}`;
+
+    await Invoice.create({
+      invoiceNumber,
+      order: order._id,
+      user: req.user._id,
+      amount: totalPrice
     });
 
     res.status(201).json({ success: true, order });

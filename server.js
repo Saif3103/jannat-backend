@@ -89,6 +89,7 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
+app.use('/api/invoices', require('./routes/invoiceRoutes'));
 app.use('/api', require('./routes/miscRoutes'));
 
 // ❌ 404 handler
