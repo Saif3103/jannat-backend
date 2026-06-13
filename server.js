@@ -70,7 +70,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/', (req, res) => {
   res.json({
     message: '🚀 Jannat Rugs Backend API is running',
-    version: '1.0.2',
+    version: '1.0.3',
     allowedOrigins
   });
 });
