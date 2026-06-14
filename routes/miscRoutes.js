@@ -14,15 +14,15 @@ router.delete('/offers/:id', protect, adminOnly, deleteOffer);
 router.get('/settings', getSettings);
 router.put('/settings', protect, adminOnly, upload.any(), updateSettings);
 
-// Dedicated team image upload endpoint — avoids multer "unexpected file" errors
-router.post('/settings/upload-team-image', protect, adminOnly, upload.single('image'), async (req, res) => {
+// Dedicated team image upload endpoint — uses upload.any() to avoid multer "Unexpected field" errors
+router.post('/settings/upload-team-image', protect, adminOnly, upload.any(), async (req, res) => {
   try {
     const { field, base64 } = req.body;
     const allowedFields = ['founderImage', 'sahanaImage', 'saifImage', 'coFounderImage'];
     if (!allowedFields.includes(field)) {
       return res.status(400).json({ success: false, message: 'Invalid field name' });
     }
-    
+
     let imageUrl = '';
     if (base64) {
       const { cloudinary } = require('../config/cloudinary');
@@ -32,11 +32,12 @@ router.post('/settings/upload-team-image', protect, adminOnly, upload.single('im
         });
         imageUrl = uploadResponse.secure_url;
       } catch (cloudinaryErr) {
-        console.error('Cloudinary base64 upload failed, storing base64 directly:', cloudinaryErr);
-        imageUrl = base64; // Storing base64 as fallback
+        console.error('Cloudinary base64 upload failed:', cloudinaryErr);
+        imageUrl = base64;
       }
-    } else if (req.file) {
-      imageUrl = req.file.path;
+    } else if (req.files && req.files.length > 0) {
+      // upload.any() gives us req.files array — pick the first file regardless of fieldname
+      imageUrl = req.files[0].path;
     } else {
       return res.status(400).json({ success: false, message: 'No image provided' });
     }
@@ -48,6 +49,7 @@ router.post('/settings/upload-team-image', protect, adminOnly, upload.single('im
     await settings.save();
     res.json({ success: true, settings, url: imageUrl });
   } catch (err) {
+    console.error('Team image upload error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
