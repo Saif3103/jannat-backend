@@ -16,7 +16,11 @@ const storage = new CloudinaryStorage({
     else if (file.fieldname === 'avatar' || file.fieldname === 'profileImage') folder = 'jannat_rugs/users';
     else if (file.fieldname === 'image' || file.fieldname === 'chatImage') folder = 'jannat_rugs/support';
     else if (file.fieldname === 'paymentProof') folder = 'jannat_rugs/payments';
-    else folder = 'jannat_rugs/general';
+    else if (
+      ['founderImage', 'sahanaImage', 'saifImage', 'coFounderImage'].includes(file.fieldname)
+    ) {
+      folder = 'jannat_rugs/team';
+    } else folder = 'jannat_rugs/general';
 
     return {
       folder: folder,
