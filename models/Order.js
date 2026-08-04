@@ -14,16 +14,30 @@ const orderSchema = new mongoose.Schema({
   shippingAddress: {
     name: String,
     phone: String,
+    email: String,
+    house: String,
     street: String,
+    landmark: String,
     city: String,
     state: String,
     pincode: String,
     country: { type: String, default: 'India' },
+    addressType: { type: String, default: 'Home' },
   },
   paymentMethod: {
     type: String,
-    enum: ['COD', 'Razorpay', 'UPI', 'Card', 'Wallet'],
-    default: 'COD'
+    enum: [
+      'COD',
+      'Razorpay',
+      'UPI',
+      'Card',
+      'Wallet',
+      'BankTransfer',
+      'PayAfterConfirm',
+      'DesignConsultation',
+      'Showroom',
+    ],
+    default: 'COD',
   },
   paymentResult: {
     id: String,
@@ -31,23 +45,30 @@ const orderSchema = new mongoose.Schema({
     updateTime: String,
     emailAddress: String,
   },
+  deliveryOption: {
+    type: String,
+    enum: ['standard', 'express'],
+    default: 'standard',
+  },
   itemsPrice: { type: Number, default: 0 },
   shippingPrice: { type: Number, default: 0 },
   taxPrice: { type: Number, default: 0 },
+  discountAmount: { type: Number, default: 0 },
+  couponCode: { type: String, default: '' },
   totalPrice: { type: Number, default: 0 },
   isPaid: { type: Boolean, default: false },
   paidAt: Date,
   orderStatus: {
     type: String,
     enum: ['Pending', 'Confirmed', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Returned'],
-    default: 'Pending'
+    default: 'Pending',
   },
   trackingNumber: String,
   deliveredAt: Date,
   statusHistory: [{
     status: String,
     message: String,
-    timestamp: { type: Date, default: Date.now }
+    timestamp: { type: Date, default: Date.now },
   }],
   notes: String,
 }, { timestamps: true });

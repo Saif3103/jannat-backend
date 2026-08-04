@@ -5,16 +5,38 @@ const { v4: uuidv4 } = require('uuid');
 // @desc  Create order
 const createOrder = async (req, res) => {
   try {
-    const { orderItems, shippingAddress, paymentMethod, itemsPrice, shippingPrice, taxPrice, totalPrice, notes } = req.body;
+    const {
+      orderItems,
+      shippingAddress,
+      paymentMethod,
+      itemsPrice,
+      shippingPrice,
+      taxPrice,
+      totalPrice,
+      notes,
+      deliveryOption,
+      discountAmount,
+      couponCode,
+    } = req.body;
     if (!orderItems || orderItems.length === 0) {
       return res.status(400).json({ success: false, message: 'No order items' });
     }
 
     const order = await Order.create({
       user: req.user._id,
-      orderItems, shippingAddress, paymentMethod, itemsPrice, shippingPrice, taxPrice, totalPrice, notes,
+      orderItems,
+      shippingAddress,
+      paymentMethod,
+      itemsPrice,
+      shippingPrice,
+      taxPrice,
+      totalPrice,
+      notes,
+      deliveryOption: deliveryOption || 'standard',
+      discountAmount: discountAmount || 0,
+      couponCode: couponCode || '',
       trackingNumber: 'JRC-' + uuidv4().split('-')[0].toUpperCase(),
-      statusHistory: [{ status: 'Pending', message: 'Order placed successfully' }]
+      statusHistory: [{ status: 'Pending', message: 'Order request received — awaiting verification' }],
     });
 
     // Auto-generate invoice record
