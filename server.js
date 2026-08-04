@@ -1,13 +1,16 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const connectDB = require('./config/db');
+const { initSupportSocket } = require('./socket/supportSocket');
 
 const app = express();
+const server = http.createServer(app);
 
 // Connect DB
 connectDB();
@@ -70,7 +73,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/', (req, res) => {
   res.json({
     message: '🚀 Jannat Rugs Backend API is running',
-    version: '1.0.3',
+    version: '1.0.4',
     allowedOrigins
   });
 });
@@ -90,6 +93,7 @@ app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/invoices', require('./routes/invoiceRoutes'));
+app.use('/api/support', require('./routes/supportRoutes'));
 app.use('/api', require('./routes/miscRoutes'));
 
 // ❌ 404 handler
@@ -109,10 +113,13 @@ app.use((err, req, res, next) => {
   });
 });
 
+// ✅ Socket.io (live support)
+initSupportSocket(server, allowedOrigins);
+
 // ✅ Server start
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
 

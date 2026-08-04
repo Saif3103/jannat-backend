@@ -14,6 +14,7 @@ const storage = new CloudinaryStorage({
     if (file.fieldname === 'images') folder = 'jannat_rugs/products';
     else if (file.fieldname === 'categoryImage') folder = 'jannat_rugs/categories';
     else if (file.fieldname === 'avatar' || file.fieldname === 'profileImage') folder = 'jannat_rugs/users';
+    else if (file.fieldname === 'image' || file.fieldname === 'chatImage') folder = 'jannat_rugs/support';
     else folder = 'jannat_rugs/general';
 
     return {
