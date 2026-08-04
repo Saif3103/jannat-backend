@@ -117,14 +117,102 @@ const changePassword = async (req, res) => {
 const addAddress = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    if (req.body.isDefault) user.addresses.forEach(a => a.isDefault = false);
-    user.addresses.push(req.body);
+    const payload = normalizeAddress(req.body);
+
+    if (payload.isDefault || user.addresses.length === 0) {
+      user.addresses.forEach((a) => {
+        a.isDefault = false;
+      });
+      payload.isDefault = true;
+    }
+
+    user.addresses.push(payload);
     await user.save();
     res.json({ success: true, addresses: user.addresses });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// @desc   Update address
+const updateAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const addr = user.addresses.id(req.params.id);
+    if (!addr) return res.status(404).json({ success: false, message: 'Address not found' });
+
+    const payload = normalizeAddress(req.body);
+    Object.assign(addr, payload);
+
+    if (payload.isDefault) {
+      user.addresses.forEach((a) => {
+        a.isDefault = a._id.toString() === addr._id.toString();
+      });
+    }
+
+    await user.save();
+    res.json({ success: true, addresses: user.addresses });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc   Delete address
+const deleteAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const addr = user.addresses.id(req.params.id);
+    if (!addr) return res.status(404).json({ success: false, message: 'Address not found' });
+
+    const wasDefault = addr.isDefault;
+    user.addresses.pull(req.params.id);
+
+    if (wasDefault && user.addresses.length > 0) {
+      user.addresses[0].isDefault = true;
+    }
+
+    await user.save();
+    res.json({ success: true, addresses: user.addresses });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc   Set default address
+const setDefaultAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const addr = user.addresses.id(req.params.id);
+    if (!addr) return res.status(404).json({ success: false, message: 'Address not found' });
+
+    user.addresses.forEach((a) => {
+      a.isDefault = a._id.toString() === addr._id.toString();
+    });
+    await user.save();
+    res.json({ success: true, addresses: user.addresses });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+function normalizeAddress(body = {}) {
+  const addressType = (body.addressType || body.label || 'Home').toString().trim() || 'Home';
+  return {
+    name: (body.name || '').toString().trim(),
+    phone: (body.phone || '').toString().trim(),
+    email: (body.email || '').toString().trim(),
+    house: (body.house || '').toString().trim(),
+    street: (body.street || '').toString().trim(),
+    landmark: (body.landmark || '').toString().trim(),
+    city: (body.city || '').toString().trim(),
+    state: (body.state || '').toString().trim(),
+    pincode: (body.pincode || '').toString().trim(),
+    country: (body.country || 'India').toString().trim() || 'India',
+    addressType,
+    label: addressType,
+    isDefault: Boolean(body.isDefault),
+  };
+}
 
 // @desc   Toggle wishlist
 const toggleWishlist = async (req, res) => {
@@ -167,4 +255,17 @@ const toggleUserStatus = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getProfile, updateProfile, changePassword, addAddress, toggleWishlist, getAllUsers, toggleUserStatus };
+module.exports = {
+  register,
+  login,
+  getProfile,
+  updateProfile,
+  changePassword,
+  addAddress,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
+  toggleWishlist,
+  getAllUsers,
+  toggleUserStatus,
+};
