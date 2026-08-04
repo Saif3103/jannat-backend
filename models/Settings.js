@@ -39,6 +39,12 @@ const settingsSchema = new mongoose.Schema({
   }],
   newsletter: [String],
   maintenance: { type: Boolean, default: false },
+  bankAccountName: { type: String, default: 'Jannat Rugs Co.' },
+  bankAccountNumber: { type: String, default: '' },
+  bankIfsc: { type: String, default: '' },
+  bankName: { type: String, default: '' },
+  bankBranch: { type: String, default: '' },
+  bankUpi: { type: String, default: '' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Settings', settingsSchema);

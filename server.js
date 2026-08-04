@@ -91,6 +91,9 @@ app.get('/api/health', (req, res) => {
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/consultations', require('./routes/consultationRoutes'));
+app.use('/api/showroom-bookings', require('./routes/showroomRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/invoices', require('./routes/invoiceRoutes'));
 app.use('/api/support', require('./routes/supportRoutes'));
