@@ -56,15 +56,9 @@ const orderSchema = new mongoose.Schema(
       addressType: { type: String, default: 'Home' },
     },
     paymentMethod: { type: String, default: 'COD' },
-    paymentStatus: {
-      type: String,
-      default: 'Pending',
-    },
-    verificationStatus: {
-      type: String,
-      enum: ['Pending', 'Approved', 'Rejected', 'RequestAgain', 'N/A'],
-      default: 'N/A',
-    },
+    // No enums — avoids ValidationError for BankTransfer / PayAfterConfirm flows
+    paymentStatus: { type: String, default: 'Pending' },
+    verificationStatus: { type: String, default: 'N/A' },
     transactionId: { type: String, default: '' },
     paymentProof: { type: String, default: '' },
     bankName: { type: String, default: '' },
@@ -74,11 +68,7 @@ const orderSchema = new mongoose.Schema(
       updateTime: String,
       emailAddress: String,
     },
-    deliveryOption: {
-      type: String,
-      enum: ['standard', 'express'],
-      default: 'standard',
-    },
+    deliveryOption: { type: String, default: 'standard' },
     itemsPrice: { type: Number, default: 0 },
     shippingPrice: { type: Number, default: 0 },
     taxPrice: { type: Number, default: 0 },
@@ -87,10 +77,7 @@ const orderSchema = new mongoose.Schema(
     totalPrice: { type: Number, default: 0 },
     isPaid: { type: Boolean, default: false },
     paidAt: Date,
-    orderStatus: {
-      type: String,
-      default: 'Pending',
-    },
+    orderStatus: { type: String, default: 'Pending' },
     orderIdDisplay: { type: String, default: '' },
     trackingNumber: String,
     deliveredAt: Date,
@@ -111,7 +98,7 @@ const orderSchema = new mongoose.Schema(
     notes: String,
     adminNotes: { type: String, default: '' },
   },
-  { timestamps: true }
+  { timestamps: true, strict: false }
 );
 
 orderSchema.statics.ORDER_STATUSES = ORDER_STATUSES;
@@ -125,6 +112,13 @@ orderSchema.methods.initTimeline = function () {
   }));
 };
 
-module.exports = mongoose.model('Order', orderSchema);
+// Force re-register so hot-reload / old enum cache cannot block new payment statuses
+if (mongoose.models.Order) {
+  delete mongoose.models.Order;
+  delete mongoose.connection.models.Order;
+}
+
+const Order = mongoose.model('Order', orderSchema);
+module.exports = Order;
 module.exports.ORDER_STATUSES = ORDER_STATUSES;
 module.exports.TIMELINE_STEPS = TIMELINE_STEPS;

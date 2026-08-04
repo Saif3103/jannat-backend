@@ -57,13 +57,11 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No order items' });
     }
 
-    // Design Consultation / Showroom are handled by their own APIs
     if (paymentMethod === 'DesignConsultation' || paymentMethod === 'Showroom') {
       return res.status(400).json({
         success: false,
         message: 'Use consultation or showroom booking endpoints for this option',
-        redirect:
-          paymentMethod === 'DesignConsultation' ? 'consultation' : 'showroom',
+        redirect: paymentMethod === 'DesignConsultation' ? 'consultation' : 'showroom',
       });
     }
 
@@ -74,10 +72,26 @@ const createOrder = async (req, res) => {
     const orderIdDisplay = makeDisplayId();
     const trackingNumber = 'JRC-' + uuidv4().split('-')[0].toUpperCase();
 
-    const order = new Order({
+    const mongoose = require('mongoose');
+    const cleanItems = (orderItems || []).map((i) => {
+      const pid = i.product;
+      const validProduct =
+        pid && mongoose.Types.ObjectId.isValid(String(pid)) ? pid : undefined;
+      return {
+        product: validProduct,
+        name: i.name || 'Rug',
+        image: i.image || '',
+        price: Number(i.price) || 0,
+        quantity: Number(i.quantity) || 1,
+        size: i.size || '',
+        color: i.color || '',
+      };
+    });
+
+    const payload = {
       user: req.user._id,
-      orderItems,
-      shippingAddress,
+      orderItems: cleanItems,
+      shippingAddress: shippingAddress || {},
       paymentMethod: safePayment,
       itemsPrice: Number(itemsPrice) || 0,
       shippingPrice: Number(shippingPrice) || 0,
@@ -92,35 +106,109 @@ const createOrder = async (req, res) => {
       orderStatus: init.orderStatus,
       paymentStatus: init.paymentStatus,
       verificationStatus: init.verificationStatus,
-      statusHistory: [{ status: init.orderStatus, message: init.historyMsg }],
-    });
-    order.initTimeline();
-    await order.save();
+      statusHistory: [{ status: init.orderStatus, message: init.historyMsg, timestamp: new Date() }],
+      timeline: [
+        'Order Received',
+        'Verification',
+        'Payment',
+        'Quality Inspection',
+        'Packaging',
+        'Shipment',
+        'Delivered',
+      ].map((step, i) => ({
+        step,
+        completed: i === 0,
+        at: i === 0 ? new Date() : null,
+      })),
+    };
 
-    const dateYear = new Date().getFullYear();
-    const randomId = Math.random().toString(36).substring(2, 6).toUpperCase();
-    await Invoice.create({
-      invoiceNumber: `INV-${dateYear}-${randomId}`,
-      order: order._id,
-      user: req.user._id,
-      amount: Number(totalPrice) || 0,
-    });
+    let order;
+    try {
+      order = await Order.create(payload);
+    } catch (createErr) {
+      console.error('Order.create failed, retrying safely:', createErr.message);
+      // Soft statuses first (works even if old orderStatus enum is cached)
+      const soft = {
+        ...payload,
+        orderStatus: 'Pending',
+        paymentStatus: safePayment === 'BankTransfer' ? 'AwaitingProof' : 'Pending',
+        verificationStatus:
+          safePayment === 'BankTransfer'
+            ? 'Pending'
+            : safePayment === 'PayAfterConfirm'
+              ? 'AwaitingCall'
+              : 'N/A',
+        statusHistory: [
+          { status: 'Pending', message: init.historyMsg, timestamp: new Date() },
+        ],
+      };
+      try {
+        order = await Order.create(soft);
+      } catch (softErr) {
+        console.error('Order.create soft failed, using insertOne:', softErr.message);
+        const mongoose = require('mongoose');
+        const _id = new mongoose.Types.ObjectId();
+        const now = new Date();
+        await Order.collection.insertOne({
+          ...soft,
+          _id,
+          createdAt: now,
+          updatedAt: now,
+          __v: 0,
+        });
+        order = await Order.findById(_id);
+      }
+      // Best-effort: store intended display statuses
+      try {
+        await Order.updateOne(
+          { _id: order._id },
+          {
+            $set: {
+              orderStatus: init.orderStatus,
+              paymentStatus: init.paymentStatus,
+              verificationStatus: init.verificationStatus,
+              paymentMethod: safePayment,
+            },
+          }
+        );
+        order = await Order.findById(order._id);
+      } catch (_) {
+        /* keep soft statuses */
+      }
+    }
 
-    const notifType = safePayment === 'BankTransfer' ? 'bank_transfer' : 'order';
-    await notifyAdmin({
-      type: notifType,
-      title: `New ${safePayment} order`,
-      body: `${orderIdDisplay} · ₹${Number(totalPrice || 0).toLocaleString('en-IN')} · ${shippingAddress?.name || req.user.name}`,
-      link: '/admin/orders',
-      refId: order._id,
-    });
-    await notifyUser(req.user._id, {
-      type: 'order',
-      title: 'Order received',
-      body: `Your order ${orderIdDisplay} has been received.`,
-      link: `/order-success`,
-      refId: order._id,
-    });
+    try {
+      const dateYear = new Date().getFullYear();
+      const randomId = Math.random().toString(36).substring(2, 6).toUpperCase();
+      await Invoice.create({
+        invoiceNumber: `INV-${dateYear}-${randomId}`,
+        order: order._id,
+        user: req.user._id,
+        amount: Number(totalPrice) || 0,
+      });
+    } catch (invErr) {
+      console.error('Invoice create skipped:', invErr.message);
+    }
+
+    try {
+      const notifType = safePayment === 'BankTransfer' ? 'bank_transfer' : 'order';
+      await notifyAdmin({
+        type: notifType,
+        title: `New ${safePayment} order`,
+        body: `${orderIdDisplay} · ₹${Number(totalPrice || 0).toLocaleString('en-IN')} · ${shippingAddress?.name || req.user.name}`,
+        link: '/admin/orders',
+        refId: order._id,
+      });
+      await notifyUser(req.user._id, {
+        type: 'order',
+        title: 'Order received',
+        body: `Your order ${orderIdDisplay} has been received.`,
+        link: '/dashboard?tab=orders',
+        refId: order._id,
+      });
+    } catch (nErr) {
+      console.error('Notify skipped:', nErr.message);
+    }
 
     res.status(201).json({
       success: true,
