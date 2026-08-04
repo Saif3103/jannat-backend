@@ -89,41 +89,134 @@ const updateSettings = async (req, res) => {
     // Convert upload.any() array to an object matching upload.fields structure
     if (req.files && Array.isArray(req.files)) {
       const filesObj = {};
-      req.files.forEach(f => {
+      req.files.forEach((f) => {
         if (!filesObj[f.fieldname]) filesObj[f.fieldname] = [];
         filesObj[f.fieldname].push(f);
       });
       req.files = filesObj;
     }
-    
-    const updates = req.body;
-    if (updates.socialLinks) updates.socialLinks = typeof updates.socialLinks === 'string' ? JSON.parse(updates.socialLinks) : updates.socialLinks;
-    if (updates.chatbotFaqs) updates.chatbotFaqs = typeof updates.chatbotFaqs === 'string' ? JSON.parse(updates.chatbotFaqs) : updates.chatbotFaqs;
-    if (updates.testimonials) updates.testimonials = typeof updates.testimonials === 'string' ? JSON.parse(updates.testimonials) : updates.testimonials;
-    
-    if (req.files) {
-      if (req.files.logo) settings.logo = req.files.logo[0].path;
-      if (req.files.favicon) settings.favicon = req.files.favicon[0].path;
-      if (req.files.profileImage) settings.profileImage = req.files.profileImage[0].path;
-      if (req.files.founderImage) settings.founderImage = req.files.founderImage[0].path;
-      if (req.files.coFounderImage) settings.coFounderImage = req.files.coFounderImage[0].path;
-      if (req.files.sahanaImage) settings.sahanaImage = req.files.sahanaImage[0].path;
-      if (req.files.saifImage) settings.saifImage = req.files.saifImage[0].path;
-      if (req.files.video) settings.heroVideo = req.files.video[0].path;
-      if (req.files.heroVideo) settings.heroVideo = req.files.heroVideo[0].path;
-      if (req.files.adVideo) settings.adVideo = req.files.adVideo[0].path;
-      if (req.files.bannerImages) updates.bannerImages = req.files.bannerImages.map(f => f.path);
-    }
-    
-    // Ensure we don't accidentally overwrite images with empty strings from req.body
-    const fileFields = ['logo', 'favicon', 'profileImage', 'founderImage', 'coFounderImage', 'sahanaImage', 'saifImage', 'video', 'heroVideo', 'adVideo'];
-    fileFields.forEach(f => delete updates[f]);
 
-    Object.assign(settings, updates);
+    const updates = { ...(req.body || {}) };
+    if (updates.socialLinks)
+      updates.socialLinks =
+        typeof updates.socialLinks === 'string' ? JSON.parse(updates.socialLinks) : updates.socialLinks;
+    if (updates.chatbotFaqs)
+      updates.chatbotFaqs =
+        typeof updates.chatbotFaqs === 'string' ? JSON.parse(updates.chatbotFaqs) : updates.chatbotFaqs;
+    if (updates.testimonials)
+      updates.testimonials =
+        typeof updates.testimonials === 'string' ? JSON.parse(updates.testimonials) : updates.testimonials;
+
+    const imageSet = {};
+    const pickUrl = (file) =>
+      file?.path || file?.secure_url || file?.url || '';
+
+    if (req.files) {
+      if (req.files.logo) imageSet.logo = pickUrl(req.files.logo[0]);
+      if (req.files.favicon) imageSet.favicon = pickUrl(req.files.favicon[0]);
+      if (req.files.profileImage) imageSet.profileImage = pickUrl(req.files.profileImage[0]);
+      if (req.files.founderImage) imageSet.founderImage = pickUrl(req.files.founderImage[0]);
+      if (req.files.coFounderImage) imageSet.coFounderImage = pickUrl(req.files.coFounderImage[0]);
+      if (req.files.sahanaImage) imageSet.sahanaImage = pickUrl(req.files.sahanaImage[0]);
+      if (req.files.saifImage) imageSet.saifImage = pickUrl(req.files.saifImage[0]);
+      if (req.files.video) imageSet.heroVideo = pickUrl(req.files.video[0]);
+      if (req.files.heroVideo) imageSet.heroVideo = pickUrl(req.files.heroVideo[0]);
+      if (req.files.adVideo) imageSet.adVideo = pickUrl(req.files.adVideo[0]);
+      if (req.files.bannerImages) {
+        updates.bannerImages = req.files.bannerImages.map((f) => pickUrl(f)).filter(Boolean);
+      }
+    }
+
+    // Never overwrite image fields with empty body strings / helper fields
+    const fileFields = [
+      'logo',
+      'favicon',
+      'profileImage',
+      'founderImage',
+      'coFounderImage',
+      'sahanaImage',
+      'saifImage',
+      'video',
+      'heroVideo',
+      'adVideo',
+      'field',
+    ];
+    fileFields.forEach((f) => delete updates[f]);
+
+    Object.assign(settings, updates, imageSet);
+    Object.keys(imageSet).forEach((k) => settings.markModified(k));
     await settings.save();
-    res.json({ success: true, settings });
+
+    if (Object.keys(imageSet).length) {
+      await Settings.findByIdAndUpdate(settings._id, { $set: imageSet });
+    }
+
+    const fresh = await Settings.findById(settings._id).lean();
+    res.json({ success: true, settings: fresh });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+const uploadTeamImage = async (req, res) => {
+  try {
+    const allowedFields = ['founderImage', 'sahanaImage', 'saifImage', 'coFounderImage'];
+    let field = req.body?.field;
+    if (Array.isArray(field)) field = field[0];
+    field = (field || '').toString().trim();
+
+    if (!allowedFields.includes(field) && req.files?.length) {
+      const match = req.files.find((f) => allowedFields.includes(f.fieldname));
+      if (match) field = match.fieldname;
+    }
+
+    if (!allowedFields.includes(field)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid field name. Use one of: ${allowedFields.join(', ')}`,
+      });
+    }
+
+    let imageUrl = '';
+    if (req.files && req.files.length > 0) {
+      const file =
+        req.files.find((f) => f.fieldname === field) ||
+        req.files.find((f) => allowedFields.includes(f.fieldname)) ||
+        req.files[0];
+      imageUrl =
+        file.path ||
+        file.secure_url ||
+        file.url ||
+        (file.filename
+          ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${file.filename}`
+          : '');
+    }
+
+    if (!imageUrl && req.body?.base64) {
+      const { cloudinary } = require('../config/cloudinary');
+      const uploadResponse = await cloudinary.uploader.upload(req.body.base64, {
+        folder: 'jannat_rugs/team',
+        public_id: `${field}-${Date.now()}`,
+      });
+      imageUrl = uploadResponse.secure_url;
+    }
+
+    if (!imageUrl) {
+      return res.status(400).json({ success: false, message: 'No image provided or upload failed' });
+    }
+
+    let settings = await Settings.findOne();
+    if (!settings) settings = new Settings();
+    settings.set(field, imageUrl);
+    settings.markModified(field);
+    await settings.save();
+    await Settings.findByIdAndUpdate(settings._id, { $set: { [field]: imageUrl } });
+
+    const fresh = await Settings.findById(settings._id).lean();
+    res.json({ success: true, settings: fresh, url: imageUrl, field });
+  } catch (err) {
+    console.error('Team image upload error:', err);
+    res.status(500).json({ success: false, message: err.message || 'Upload failed' });
   }
 };
 
@@ -259,4 +352,4 @@ const chatbotQuery = async (req, res) => {
   }
 };
 
-module.exports = { submitContact, getContacts, getOffers, getAllOffers, createOffer, updateOffer, deleteOffer, getSettings, updateSettings, subscribeNewsletter, getAnalytics, chatbotQuery, getRecentVideoReviews };
+module.exports = { submitContact, getContacts, getOffers, getAllOffers, createOffer, updateOffer, deleteOffer, getSettings, updateSettings, uploadTeamImage, subscribeNewsletter, getAnalytics, chatbotQuery, getRecentVideoReviews };
