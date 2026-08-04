@@ -26,17 +26,6 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: [
-      'COD',
-      'Razorpay',
-      'UPI',
-      'Card',
-      'Wallet',
-      'BankTransfer',
-      'PayAfterConfirm',
-      'DesignConsultation',
-      'Showroom',
-    ],
     default: 'COD',
   },
   paymentResult: {

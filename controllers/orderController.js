@@ -22,18 +22,32 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No order items' });
     }
 
+    const allowedPayments = [
+      'COD',
+      'Razorpay',
+      'UPI',
+      'Card',
+      'Wallet',
+      'BankTransfer',
+      'PayAfterConfirm',
+      'DesignConsultation',
+      'Showroom',
+    ];
+    const safePayment = allowedPayments.includes(paymentMethod) ? paymentMethod : 'COD';
+    const safeDelivery = deliveryOption === 'express' ? 'express' : 'standard';
+
     const order = await Order.create({
       user: req.user._id,
       orderItems,
       shippingAddress,
-      paymentMethod,
-      itemsPrice,
-      shippingPrice,
-      taxPrice,
-      totalPrice,
-      notes,
-      deliveryOption: deliveryOption || 'standard',
-      discountAmount: discountAmount || 0,
+      paymentMethod: safePayment,
+      itemsPrice: Number(itemsPrice) || 0,
+      shippingPrice: Number(shippingPrice) || 0,
+      taxPrice: Number(taxPrice) || 0,
+      totalPrice: Number(totalPrice) || 0,
+      notes: notes || '',
+      deliveryOption: safeDelivery,
+      discountAmount: Number(discountAmount) || 0,
       couponCode: couponCode || '',
       trackingNumber: 'JRC-' + uuidv4().split('-')[0].toUpperCase(),
       statusHistory: [{ status: 'Pending', message: 'Order request received — awaiting verification' }],
@@ -48,12 +62,19 @@ const createOrder = async (req, res) => {
       invoiceNumber,
       order: order._id,
       user: req.user._id,
-      amount: totalPrice
+      amount: Number(totalPrice) || 0,
     });
 
     res.status(201).json({ success: true, order });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Create order error:', err);
+    const message =
+      err.name === 'ValidationError'
+        ? Object.values(err.errors || {})
+            .map((e) => e.message)
+            .join(', ') || err.message
+        : err.message;
+    res.status(500).json({ success: false, message: message || 'Failed to create order' });
   }
 };
 
