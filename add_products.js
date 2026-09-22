@@ -29,7 +29,7 @@ const carpetImages = [
 ];
 
 const names = [
-  'Royal Persian Handmade Rug', 'Kashmiri Silk Hand-Knotted', 'Mirzapur Heritage Handmade', 
+  'Royal Persian Handmade Rug', 'Kashmiri Silk Hand-Knotted', 'Bhadohi Heritage Handmade', 
   'Mughal Era Handwoven Carpet', 'Jaipur Floral Handmade', 'Bhadohi Authentic Wool Handmade', 
   'Tabriz Vintage Hand-Knotted', 'Agra Fine Silk Handmade', 'Oushak Artisan Handmade', 
   'Khorasan Antique Handmade'

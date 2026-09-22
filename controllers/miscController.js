@@ -343,7 +343,7 @@ const chatbotQuery = async (req, res) => {
       `• ${p.name} — ₹${p.discountPrice || p.price} (${p.category || 'Rug'})`
     ).join('\n');
 
-    const systemPrompt = `You are Jannat, a warm and helpful AI concierge for "Jannat Rugs Co." — a premium handmade carpet brand from Mirzapur/Bhadohi, UP, India.
+    const systemPrompt = `You are Jannat, a warm and helpful AI concierge for "Jannat Rugs Co." — a premium handmade carpet brand from Bhadohi, UP, India.
 
 Personality & Rules:
 - Reply in the EXACT same language as the customer (Hindi, Hinglish, or English)
@@ -354,7 +354,7 @@ Personality & Rules:
 
 About Jannat Rugs Co.:
 - Premium handmade rugs & carpets (Hand-knotted, Persian, Wool, Silk, Jute)
-- Located in Mirzapur/Bhadohi, UP — India's carpet heartland
+- Located in Bhadohi, UP — India's carpet heartland
 - Price range: ₹2,000 to ₹2,50,000
 - Free shipping on orders above ₹5,000 | 7-day returns | Delivery 5-7 days
 
