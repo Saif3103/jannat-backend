@@ -5,6 +5,47 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const User = require('../models/User');
 
+// Gemini REST API helper (avoids SDK stream issues on Windows)
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+
+async function callGemini(systemPrompt, history, userMessage) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY not set');
+
+  // Build contents array — system as first user turn (REST API approach)
+  const contents = [
+    { role: 'user', parts: [{ text: systemPrompt }] },
+    { role: 'model', parts: [{ text: 'Understood! I am Jannat, your AI concierge for Jannat Rugs Co. How can I help?' }] },
+    ...history
+      .filter(h => h.from && h.text)
+      .slice(-6)
+      .map(h => ({ role: h.from === 'user' ? 'user' : 'model', parts: [{ text: h.text }] })),
+    { role: 'user', parts: [{ text: userMessage }] },
+  ];
+
+  const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents,
+      generationConfig: {
+        temperature: 0.75,
+        maxOutputTokens: 512,
+        topP: 0.9,
+      },
+    }),
+    signal: AbortSignal.timeout(15000), // 15s timeout
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Gemini API error ${response.status}: ${errText}`);
+  }
+
+  const data = await response.json();
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
 // Contact
 const submitContact = async (req, res) => {
   try {
@@ -287,68 +328,90 @@ const getRecentVideoReviews = async (req, res) => {
 
 const chatbotQuery = async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, history = [] } = req.body;
     if (!message) return res.json({ success: true, reply: 'Hello! How can I help you today?' });
-    
-    console.log('Chatbot query received:', message);
-    const settings = await Settings.findOne();
+
+    // Fetch store context in parallel
+    const [settings, featuredProducts] = await Promise.all([
+      Settings.findOne().lean(),
+      Product.find({ isFeatured: true }).select('name price discountPrice category').limit(6).lean(),
+    ]);
+
     const faqs = settings?.chatbotFaqs || [];
-    
-    const msg = message.toLowerCase();
-    
-    // Check FAQs
-    const faq = faqs.find(f => msg.includes(f.question.toLowerCase().split(' ').slice(0, 3).join(' ')));
-    if (faq) {
-      console.log('Found FAQ match:', faq.question);
-      return res.json({ success: true, reply: faq.answer });
-    }
+    const faqText = faqs.map(f => `Q: ${f.question}\nA: ${f.answer}`).join('\n\n');
+    const productList = featuredProducts.map(p =>
+      `• ${p.name} — ₹${p.discountPrice || p.price} (${p.category || 'Rug'})`
+    ).join('\n');
 
-    // Smart responses (Strictly English)
-    let reply = '';
-    if (msg.includes('price') || msg.includes('cost') || msg.includes('rate') || msg.includes('daam') || msg.includes('expensive')) {
-      reply = "Our masterpieces are an investment in art, ranging from ₹2,000 for boutique pieces to ₹2,50,000 for our most exclusive hand-knotted silk collections. Each price reflects the months of labor and premium materials used.";
-    } else if (msg.includes('size') || msg.includes('dimension') || msg.includes('feet') || msg.includes('bada') || msg.includes('chota')) {
-      reply = "We offer a wide range of standard sizes including 2x3, 4x6, 5x7, 6x9, 8x10, and 9x12 feet. We also specialize in bespoke sizes tailored perfectly to your architecture.";
-    } else if (msg.includes('material') || msg.includes('wool') || msg.includes('silk') || msg.includes('jute') || msg.includes('cotton')) {
-      reply = "We use only the finest natural fibers: high-altitude hand-spun wool for durability and pure mulberry silk for a celestial sheen. All our materials are ethically sourced and traditionally dyed.";
-    } else if (msg.includes('order') || msg.includes('track') || msg.includes('status')) {
-      reply = "You can monitor your masterpiece's journey through the 'Order Tracking' section in your dashboard. For real-time updates, our concierge team is always available.";
-    } else if (msg.includes('delivery') || msg.includes('shipping') || msg.includes('time') || msg.includes('arrive')) {
-      reply = "We provide complimentary white-glove shipping on orders above ₹5,000. Domestic deliveries typically arrive within 5-7 business days, meticulously packaged to ensure safety.";
-    } else if (msg.includes('return') || msg.includes('refund') || msg.includes('exchange')) {
-      reply = "Your satisfaction is paramount. We offer a 7-day return policy for our catalog pieces. If a rug doesn't perfectly resonate with your space, we will facilitate an effortless exchange.";
-    } else if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey') || msg.includes('greetings')) {
-      reply = "Greetings from Jannat Rugs Co.! ✨ I am your personal concierge. How may I assist you in discovering the perfect piece for your home today?";
-    } else if (msg.includes('contact') || msg.includes('phone') || msg.includes('email') || msg.includes('talk')) {
-      reply = "Our collection experts are available for a private consultation. You may call us at +91 9235508422 or email us at jannatrugs786@gmail.com.";
-    } else if (msg.includes('location') || msg.includes('address') || msg.includes('where') || msg.includes('pata')) {
-      reply = "Our heritage gallery is located in the historic carpet heartland of Bhadohi/Mirzapur, Uttar Pradesh. We welcome visits by appointment to experience our craftsmanship in person.";
-    } else if (msg.includes('owner') || msg.includes('founder') || msg.includes('who are')) {
-      reply = "Jannat Rugs Co. is led by visionaries Shahid Ali and Sazid Ali, who carry forward a multi-generational legacy of authentic hand-knotted carpet weaving.";
-    } else if (msg.includes('making') || msg.includes('process') || msg.includes('how are') || msg.includes('handmade')) {
-      reply = "Every Jannat rug is 100% hand-knotted by master artisans. The process involves hand-carding wool, traditional dyeing, and thousands of individual knots tied over several months on vertical looms.";
-    } else if (msg.includes('clean') || msg.includes('wash') || msg.includes('maintain') || msg.includes('care')) {
-      reply = "To preserve your rug's soul, vacuum regularly on a gentle setting. For deep rejuvenation, we recommend professional dry-cleaning every 2 years. Avoid harsh chemicals at all costs.";
-    } else if (msg.includes('custom') || msg.includes('bespoke') || msg.includes('my design') || msg.includes('apna design')) {
-      reply = "Absolutely. We specialize in bespoke commissions. You can specify the design, color palette, and dimensions to create a one-of-a-kind masterpiece for your residence.";
-    } else if (msg.includes('discount') || msg.includes('offer') || msg.includes('sale') || msg.includes('deal')) {
-      reply = "We believe in fair pricing for our artisans, but we do have exclusive seasonal collections. Currently, you can explore our 'Limited Time Offers' section on the homepage for special pieces.";
-    } else if (msg.includes('show') || msg.includes('recommend') || msg.includes('suggest') || msg.includes('carpet') || msg.includes('rug')) {
-      reply = "I would be delighted to recommend some of our most acclaimed pieces. Here are a few selections that represent the pinnacle of our current collection:";
-    } else {
-      reply = "That is an excellent inquiry. To provide you with the most accurate details, I can connect you with one of our senior carpet consultants. Would you like our contact information?";
-    }
+    const systemPrompt = `You are Jannat, a warm and knowledgeable AI assistant for "Jannat Rugs Co." — a premium handmade carpet brand from Mirzapur/Bhadohi, Uttar Pradesh, India.
 
-    // Suggest products if relevant
+Personality:
+- Warm, helpful, slightly formal like a luxury concierge
+- Reply in the SAME language as the customer (Hindi, English, or Hinglish)
+- Keep replies concise — 2-4 sentences max unless listing products
+- Use emojis sparingly ✨🪬
+- Never be robotic
+
+About Jannat Rugs Co.:
+- Premium handmade rugs & carpets — 100% hand-knotted by master artisans
+- Located in Mirzapur/Bhadohi, UP — India's carpet heartland
+- Products: Persian Handmade, Handwoven Wool, Turkish Kilims, Kashmiri Silk, Vintage Craft, Doormats
+- Price: ₹2,000 to ₹2,50,000
+- Sizes: 2x3, 4x6, 5x7, 6x9, 8x10, 9x12 feet + custom sizes
+- Materials: hand-spun wool, mulberry silk, jute, cotton — ethically sourced
+- Free shipping on orders above ₹5,000
+- 7-day hassle-free return policy
+- Delivery: 5-7 business days across India
+- Custom/bespoke orders accepted
+- Contact: +91 7007626680 | jannatrugs786@gmail.com
+- Payment: COD, UPI, Razorpay, Credit/Debit Cards
+
+Featured products right now:
+${productList || 'Check /shop for latest collection'}
+
+Store FAQs:
+${faqText || 'No FAQs configured yet'}
+
+Rules:
+- Order tracking → tell them to check 'My Orders' in their account
+- If unsure about something specific → say "WhatsApp karein: +91 7007626680"
+- NEVER make up prices/product names outside what's given
+- If someone asks to see rugs/carpets → say you'll show some suggestions`;
+
+    // Call Gemini via REST API
+    const aiReply = await callGemini(systemPrompt, history, message);
+
+    // Show products if relevant keywords detected
+    const productKeywords = ['show', 'recommend', 'suggest', 'carpet', 'rug', 'product', 'collection', 'buy', 'kharidna', 'dikhao', 'best'];
+    const shouldShowProducts = productKeywords.some(k => message.toLowerCase().includes(k));
+
     let suggestedProducts = [];
-    if (msg.includes('show') || msg.includes('recommend') || msg.includes('suggest') || msg.includes('carpet') || msg.includes('rug')) {
-      suggestedProducts = await Product.find({ isFeatured: true }).select('name images price discountPrice').limit(3);
+    if (shouldShowProducts) {
+      suggestedProducts = await Product.find({ isFeatured: true })
+        .select('name images price discountPrice category _id')
+        .limit(3)
+        .lean();
     }
 
-    res.json({ success: true, reply, suggestedProducts });
+    res.json({ success: true, reply: aiReply, suggestedProducts, aiPowered: true });
+
   } catch (err) {
-    console.error('Chatbot Error:', err);
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Chatbot AI Error:', err?.message || err);
+    // Smart keyword fallback if AI is unavailable
+    const msg = (req.body.message || '').toLowerCase();
+    let fallbackReply = 'Kuch technical issue aa gaya. Directly WhatsApp karein: +91 7007626680 ✨';
+    if (msg.includes('price') || msg.includes('cost') || msg.includes('daam') || msg.includes('rate'))
+      fallbackReply = 'Hamare rugs ₹2,000 se ₹2,50,000 tak ke hain! ✨ Exact price ke liye /shop page dekhein ya WhatsApp karein: +91 7007626680';
+    else if (msg.includes('return') || msg.includes('refund') || msg.includes('wapas'))
+      fallbackReply = 'Hamare paas 7-din ka hassle-free return policy hai. Problem ho toh +91 7007626680 pe contact karein.';
+    else if (msg.includes('delivery') || msg.includes('shipping') || msg.includes('kitne din'))
+      fallbackReply = '₹5,000+ ke orders par FREE shipping! Delivery 5-7 business days mein ho jaati hai. 🚚';
+    else if (msg.includes('custom') || msg.includes('bespoke') || msg.includes('apna'))
+      fallbackReply = 'Haan bilkul! Hum custom rugs banate hain — apna size, color aur design choose karo. WhatsApp: +91 7007626680 ✨';
+    else if (msg.includes('hello') || msg.includes('hi') || msg.includes('namaste'))
+      fallbackReply = 'Namaste! 🙏 Welcome to Jannat Rugs Co. Main aapki kaise madad kar sakta hoon?';
+
+    res.json({ success: true, reply: fallbackReply, suggestedProducts: [], aiPowered: false });
   }
 };
 
